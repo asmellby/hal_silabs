@@ -151,7 +151,7 @@ extern "C" {
 
 /* *INDENT-OFF* */
 /** IAR Embedded Workbench: Macro for handling section placement */
-#define SL_ATTRIBUTE_SECTION(X) @ X
+#define SL_ATTRIBUTE_SECTION(X) _Pragma(STRINGIZE(location = X))
 #endif
 /* *INDENT-ON* */
 
@@ -304,6 +304,12 @@ extern "C" {
 #define SL_DEPRECATED_API_SDK_2025_12
 #else
 #define SL_DEPRECATED_API_SDK_2025_12 __attribute__ ((deprecated))
+#endif
+
+#ifdef SL_SUPPRESS_DEPRECATION_WARNINGS_SDK_2026_6
+#define SL_DEPRECATED_API_SDK_2026_6
+#else
+#define SL_DEPRECATED_API_SDK_2026_6 __attribute__ ((deprecated))
 #endif
 /** @endcond */
 
