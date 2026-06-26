@@ -63,3 +63,21 @@ sl_status_t sli_convert_si91x_event_to_sl_http_client_event(const uint16_t *even
 sl_status_t sli_si91x_configure_ip_address(sl_net_ip_configuration_t *address,
                                            uint8_t virtual_ap_id,
                                            const uint32_t timeout);
+
+/**
+ * @brief Validate that a VAP supports the given IP version for socket operations.
+ *
+ * Checks whether the provided VAP has a profile configured with the requested
+ * IP version. If no profiles are configured, returns SL_STATUS_OK to allow
+ * applications that bypass sl_net (e.g., using sl_si91x_configure_ip_address
+ * directly) to proceed; firmware will handle validation in such cases.
+ *
+ * @param[in] vap_id  VAP ID to validate.
+ * @param[in] ip_type IP address type: SL_IPV4 or SL_IPV6.
+ *
+ * @return SL_STATUS_OK if the VAP supports the requested IP version or if
+ *         no profiles are configured.
+ * @return SL_STATUS_INVALID_CONFIGURATION if profiles are configured but
+ *         do not support the requested IP version.
+ */
+sl_status_t sli_net_get_vap_for_ip_version(uint8_t vap_id, sl_ip_address_type_t ip_type);

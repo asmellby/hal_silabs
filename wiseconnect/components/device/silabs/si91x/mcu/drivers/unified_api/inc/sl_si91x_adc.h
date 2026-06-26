@@ -38,6 +38,7 @@ extern "C" {
 #include "sl_status.h"
 #include "rsi_adc.h"
 #include "base_types.h"
+#include "sl_log_helper.h"
 
 /***************************************************************************/
 /**
@@ -223,7 +224,8 @@ typedef struct {
  * For more information on status codes, see [SL STATUS DOCUMENTATION](
  * https://docs.silabs.com/gecko-platform/latest/platform-common/status).
  ******************************************************************************/
-sl_status_t sl_si91x_adc_configure_clock(sl_adc_clock_config_t *clock_configuration) SL_DEPRECATED_API_WISECONNECT_4_0;
+sl_status_t sl_si91x_adc_configure_clock(const sl_adc_clock_config_t *clock_configuration)
+  SL_DEPRECATED_API_WISECONNECT_4_0;
 
 /***************************************************************************/
 /**

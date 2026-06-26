@@ -40,7 +40,7 @@
 #include "sl_component_catalog.h"
 #endif
 
-#ifdef SL_CATALOG_LOGGER_COMPONENT_PRESENT
+#ifdef SL_CATALOG_LOG_COMPONENT_PRESENT
 #include "sl_log_platform_specific.h"
 #endif
 /*******************************************************************************
@@ -110,7 +110,9 @@ bool sli_si91x_ta_packet_initiated_to_m4(void);
 sl_status_t sl_si91x_power_manager_init(void)
 {
   if (!is_initialized) {
-    SL_SI91X_POWER_MANAGER_CORE_ENTER_CRITICAL;
+    sli_si91x_power_manager_irq_state_t irq_state;
+
+    irq_state = SLI_SI91X_POWER_MANAGER_CORE_ENTER_CRITICAL();
     // If power manager is not initialized, resets the linked list
     // and requirement table.
     sl_slist_init(&power_manager_ps_transition_event_list);
@@ -122,10 +124,10 @@ sl_status_t sl_si91x_power_manager_init(void)
 #if defined(SL_SI91X_POWER_MANAGER_DEBUG) && (SL_SI91X_POWER_MANAGER_DEBUG == ENABLE)
     sli_si91x_power_manager_init_debug();
 #endif
-    SL_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL;
+    SLI_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL(irq_state);
     return SL_STATUS_OK;
   }
-  SL_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL;
+  // No SLI_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL -- critical section was not entered on this path
   return SL_STATUS_ALREADY_INITIALIZED;
 }
 
@@ -140,10 +142,16 @@ sl_status_t sl_si91x_power_manager_add_peripheral_requirement(sl_power_periphera
   if (!is_initialized) {
     // Validate the status of power manager service, if not initialized
     // returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_add_peripheral_requirement: power manager "
+                          "service not initialized, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NOT_INITIALIZED;
   }
   if (peripheral == NULL) {
     // Validates the peripheral, if null pointer, returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_add_peripheral_requirement: "
+                          "peripheral is null, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NULL_POINTER;
   }
   // returns the error code for peripheral update, if conditions are fulfilled,
@@ -163,10 +171,16 @@ sl_status_t sl_si91x_power_manager_remove_peripheral_requirement(sl_power_periph
   if (!is_initialized) {
     // Validate the status of power manager service, if not initialized
     // returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_remove_peripheral_requirement: power manager "
+                          "service not initialized, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NOT_INITIALIZED;
   }
   if (peripheral == NULL) {
     // Validates the peripheral, if null pointer, returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_remove_peripheral_"
+                          "requirement: peripheral is null, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NULL_POINTER;
   }
   // returns the error code for peripheral update, if conditions are fulfilled,
@@ -185,18 +199,26 @@ sl_status_t sl_si91x_power_manager_subscribe_ps_transition_event(
 {
   if ((event_handle) == NULL || (event_info == NULL)) {
     // Validates the null pointer, if incorrect returns the error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_subscribe_ps_transition_"
+                          "event: event_handle is null, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NULL_POINTER;
   }
+  sli_si91x_power_manager_irq_state_t irq_state;
+
   if (!is_initialized) {
     // Validate the status of power manager service, if not initialized
     // returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_subscribe_ps_transition_event: power manager "
+                          "service not initialized, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NOT_INITIALIZED;
   }
-  SL_SI91X_POWER_MANAGER_CORE_ENTER_CRITICAL;
+  irq_state          = SLI_SI91X_POWER_MANAGER_CORE_ENTER_CRITICAL();
   event_handle->info = (sl_power_manager_ps_transition_event_info_t *)event_info;
   // Push the data into the linked list.
   sl_slist_push(&power_manager_ps_transition_event_list, &event_handle->node);
-  SL_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL;
+  SLI_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL(irq_state);
   // If it reaches here, then returns SL_STATUS_OK
   return SL_STATUS_OK;
 }
@@ -211,17 +233,25 @@ sl_status_t sl_si91x_power_manager_unsubscribe_ps_transition_event(
 {
   if ((event_handle) == NULL || (event_info == NULL)) {
     // Validates the null pointer, if incorrect returns the error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_unsubscribe_ps_transition_"
+                          "event: event_handle is null, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NULL_POINTER;
   }
+  sli_si91x_power_manager_irq_state_t irq_state;
+
   if (!is_initialized) {
     // Validate the status of power manager service, if not initialized
     // returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_unsubscribe_ps_transition_event: power manager "
+                          "service not initialized, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NOT_INITIALIZED;
   }
-  SL_SI91X_POWER_MANAGER_CORE_ENTER_CRITICAL;
+  irq_state = SLI_SI91X_POWER_MANAGER_CORE_ENTER_CRITICAL();
   // Pops out the data from the linked list.
   sl_slist_remove(&power_manager_ps_transition_event_list, &event_handle->node);
-  SL_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL;
+  SLI_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL(irq_state);
   // If it reaches here, then returns SL_STATUS_OK
   return SL_STATUS_OK;
 }
@@ -232,25 +262,32 @@ sl_status_t sl_si91x_power_manager_unsubscribe_ps_transition_event(
  * If the sleep mode transition is not successful, then it returns error code.
  * Configuration of sleep parameters are handled in the internal function.
  ******************************************************************************/
-sl_status_t sl_si91x_power_manager_sleep(void)
+sl_status_t sli_si91x_power_manager_sleep(void)
 {
   sl_status_t status;
 
   if (!sli_si91x_power_manager_is_valid_transition(current_state, SL_SI91X_POWER_MANAGER_SLEEP)) {
     // Validates the state transition for sleep, if invalid returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_sleep: invalid state "
+                          "transition, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_INVALID_STATE;
   }
   if (!is_initialized) {
     // Validate the status of power manager service, if not initialized
     // returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_sleep: power manager service "
+                          "not initialized, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NOT_INITIALIZED;
   }
 #if (SL_SI91X_TICKLESS_MODE == 0)
   if (!sl_si91x_power_manager_is_ok_to_sleep()) {
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_sleep: not ok to sleep, line no: %d\r\n", __LINE__);
     return SL_STATUS_BUSY;
   }
 #endif
-#ifdef SL_CATALOG_LOGGER_COMPONENT_PRESENT
+#ifdef SL_CATALOG_LOG_COMPONENT_PRESENT
   sl_log_api_core_t *sl_log_core_api = sl_log_get_api_core();
   sl_log_core_api->pre_sleep_process(NULL);
 #endif
@@ -259,6 +296,10 @@ sl_status_t sl_si91x_power_manager_sleep(void)
     // It sets the required configurations and goes into sleep mode.
     status = sli_si91x_power_manager_set_sleep_configuration(current_state);
     if (status != SL_STATUS_OK) {
+      SL_PRINT_STRING_ERROR("sl_si91x_power_manager_sleep: set_sleep_configuration failed "
+                            "st=0x%04lX,line no : %d\r\n",
+                            (unsigned long)status,
+                            (int)__LINE__);
       return status;
     }
   } while (sl_si91x_power_manager_sleep_on_isr_exit());
@@ -266,9 +307,13 @@ sl_status_t sl_si91x_power_manager_sleep(void)
   // After wakeup, clock is set to the particular PS4/PS3/PS2 mode.
   status = sl_si91x_power_manager_set_clock_scaling(clock_scaling_mode);
   if (status != SL_STATUS_OK) {
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_sleep: set_clock_scaling "
+                          "failed st=0x%04lX,line no : %d\r\n",
+                          (unsigned long)status,
+                          (int)__LINE__);
     return status;
   }
-#ifdef SL_CATALOG_LOGGER_COMPONENT_PRESENT
+#ifdef SL_CATALOG_LOG_COMPONENT_PRESENT
   sl_log_core_api->post_sleep_process(NULL);
 #endif
   // Notifies the state transition who has subscribed to it.
@@ -276,18 +321,33 @@ sl_status_t sl_si91x_power_manager_sleep(void)
   // If it reaches here, then returns SL_STATUS_OK
   return SL_STATUS_OK;
 }
+/*******************************************************************************
+ * Internal alias for @ref sl_si91x_power_manager_sleep (same behavior).
+ ******************************************************************************/
+sl_status_t sl_si91x_power_manager_sleep(void)
+{
+  return sli_si91x_power_manager_sleep();
+}
 
 /*******************************************************************************
  * Transit to standby state and will wait for the interrupt.
  * WFI instruction is called to move the soc power mode to standby mode.
  ******************************************************************************/
-void sl_si91x_power_manager_standby(void)
+void sli_si91x_power_manager_standby(void)
 {
   if (sli_si91x_power_manager_is_valid_transition(current_state, SL_SI91X_POWER_MANAGER_STANDBY)) {
     // Validates the state transition for sleep, if valid it transits to standby mode.
     __WFI();
     notify_power_state_transition(SL_SI91X_POWER_MANAGER_STANDBY, current_state);
   }
+}
+
+/*******************************************************************************
+ * Internal alias for @ref sl_si91x_power_manager_standby (same behavior).
+ ******************************************************************************/
+void sl_si91x_power_manager_standby(void)
+{
+  sli_si91x_power_manager_standby();
 }
 
 /*******************************************************************************
@@ -300,6 +360,9 @@ sl_status_t sl_si91x_power_manager_set_wakeup_sources(uint32_t source, boolean_t
   if (!is_initialized) {
     // Validate the status of power manager service, if not initialized
     // returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_set_wakeup_sources: power "
+                          "manager service not initialized, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NOT_INITIALIZED;
   }
 
@@ -317,11 +380,17 @@ sl_status_t sl_si91x_power_manager_configure_ram_retention(sl_power_ram_retentio
   if (!is_initialized) {
     // Validate the status of power manager service, if not initialized
     // returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_configure_ram_retention: power manager service "
+                          "not initialized, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NOT_INITIALIZED;
   }
 
   if (config == NULL) {
     // Validates the config, if null pointer, returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_configure_ram_retention: "
+                          "config is null, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NULL_POINTER;
   }
   status = sli_si91x_power_manager_set_ram_retention_configuration(config);
@@ -337,32 +406,40 @@ sl_status_t sl_si91x_power_manager_configure_ram_retention(sl_power_ram_retentio
 sl_status_t sl_si91x_power_manager_set_clock_scaling(sl_clock_scaling_t mode)
 {
   sl_status_t status;
+  sli_si91x_power_manager_irq_state_t irq_state;
+
   if (!is_initialized) {
     // Validate the status of power manager service, if not initialized
     // returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_set_clock_scaling: power "
+                          "manager service not initialized, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_NOT_INITIALIZED;
   }
   if (mode >= LAST_ENUM_CLOCK_SCALING) {
     // Validates the clock scaling enum, if not in range returns error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_set_clock_scaling: invalid "
+                          "clock scaling mode, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_INVALID_PARAMETER;
   }
 
   if (mode == SL_SI91X_POWER_MANAGER_POWERSAVE) {
-    SL_SI91X_POWER_MANAGER_CORE_ENTER_CRITICAL;
+    irq_state = SLI_SI91X_POWER_MANAGER_CORE_ENTER_CRITICAL();
     // For powersave current state with false flag is passed as parameter
     clock_scaling_mode = SL_SI91X_POWER_MANAGER_POWERSAVE;
     // to the internal function.
     status = sli_si91x_clock_manager_config_clks_on_ps_change(current_state, clock_scaling_mode);
-    SL_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL;
+    SLI_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL(irq_state);
     return status;
   }
   if (mode == SL_SI91X_POWER_MANAGER_PERFORMANCE) {
-    SL_SI91X_POWER_MANAGER_CORE_ENTER_CRITICAL;
+    irq_state = SLI_SI91X_POWER_MANAGER_CORE_ENTER_CRITICAL();
     // For performance current state with true flag is passed as parameter
     clock_scaling_mode = SL_SI91X_POWER_MANAGER_PERFORMANCE;
     // to the internal function.
     status = sli_si91x_clock_manager_config_clks_on_ps_change(current_state, clock_scaling_mode);
-    SL_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL;
+    SLI_SI91X_POWER_MANAGER_CORE_EXIT_CRITICAL(irq_state);
     return status;
   }
   // If it reaches here, then the entered mode is invalid.
@@ -404,8 +481,19 @@ void sl_si91x_power_manager_deinit(void)
 
 /*******************************************************************************
  * Updates the power state requirement, requirement table and current state variable.
+ *
+ * When \c SLI_POWER_MANAGER_USE_CRITICAL_IRQ_FOR_PS_API is not defined, this implements
+ * the deprecated \c sli_si91x_power_manager_update_ps_requirement API. When the macro is defined
+ * (see \c sl_power_manager.slcc), it implements \c sli_si91x_power_manager_update_ps_requirement_with_critical_irq.
  ******************************************************************************/
+#ifndef SLI_POWER_MANAGER_USE_CRITICAL_IRQ_FOR_PS_API
 sl_status_t sli_si91x_power_manager_update_ps_requirement(sl_power_state_t state, boolean_t add)
+#else
+sl_status_t sli_si91x_power_manager_update_ps_requirement_with_critical_irq(
+  sl_power_state_t state,
+  boolean_t add,
+  sli_si91x_power_manager_irq_state_t critical_irq_state)
+#endif
 {
 #if (SL_SI91X_TICKLESS_MODE == 1)
   sl_wifi_performance_profile_v2_t pm_ta_performance_profile;
@@ -414,21 +502,57 @@ sl_status_t sli_si91x_power_manager_update_ps_requirement(sl_power_state_t state
   if (!is_initialized) {
     // Validate the status of power manager service, if not initialized
     // returns error code.
+#ifndef SLI_POWER_MANAGER_USE_CRITICAL_IRQ_FOR_PS_API
+    SL_PRINT_STRING_ERROR("sli_si91x_power_manager_update_ps_requirement: power manager service "
+                          "not initialized, line no: %d\r\n",
+                          __LINE__);
+#else
+    SL_PRINT_STRING_ERROR("sli_si91x_power_manager_update_ps_requirement_with_critical_irq: power manager service "
+                          "not initialized, line no: %d\r\n",
+                          __LINE__);
+#endif
     return SL_STATUS_NOT_INITIALIZED;
   }
   if (state > SL_SI91X_POWER_MANAGER_PS4) {
     // Validate the power state, if not in range returns error code.
+#ifndef SLI_POWER_MANAGER_USE_CRITICAL_IRQ_FOR_PS_API
+    SL_PRINT_STRING_ERROR("sli_si91x_power_manager_update_ps_requirement: "
+                          "invalid power state, line no: %d\r\n",
+                          __LINE__);
+#else
+    SL_PRINT_STRING_ERROR("sli_si91x_power_manager_update_ps_requirement_with_critical_irq: "
+                          "invalid power state, line no: %d\r\n",
+                          __LINE__);
+#endif
     return SL_STATUS_INVALID_PARAMETER;
   }
   // Validates the transition, if incorrect returns error code.
   if ((requirement_ps_table[state] == PS_MIN_COUNTER) && !add) {
     // If requirement is to remove when it 0, i.e., user tries to
     // make the requirement less than 0 (wrap around not allowed), returns error code.
+#ifndef SLI_POWER_MANAGER_USE_CRITICAL_IRQ_FOR_PS_API
+    SL_PRINT_STRING_ERROR("sli_si91x_power_manager_update_ps_requirement: "
+                          "invalid power state requirement, line no: %d\r\n",
+                          __LINE__);
+#else
+    SL_PRINT_STRING_ERROR("sli_si91x_power_manager_update_ps_requirement_with_critical_irq: "
+                          "invalid power state requirement, line no: %d\r\n",
+                          __LINE__);
+#endif
     return SL_STATUS_INVALID_PARAMETER;
   }
   if ((requirement_ps_table[state] == UINT8_MAX) && add) {
     // If requirement is to add when it is 255, i.e., user tries to
     // make the requirement more than 255 (wrap around not allowed), returns error code.
+#ifndef SLI_POWER_MANAGER_USE_CRITICAL_IRQ_FOR_PS_API
+    SL_PRINT_STRING_ERROR("sli_si91x_power_manager_update_ps_requirement: "
+                          "invalid power state requirement, line no: %d\r\n",
+                          __LINE__);
+#else
+    SL_PRINT_STRING_ERROR("sli_si91x_power_manager_update_ps_requirement_with_critical_irq: "
+                          "invalid power state requirement, line no: %d\r\n",
+                          __LINE__);
+#endif
     return SL_STATUS_INVALID_PARAMETER;
   }
   // Updates the requirement table.
@@ -439,8 +563,23 @@ sl_status_t sli_si91x_power_manager_update_ps_requirement(sl_power_state_t state
       // Notifies the state transition who has subscribed to it.
       notify_power_state_transition(SL_SI91X_POWER_MANAGER_PS2, SL_SI91X_POWER_MANAGER_PS1);
     }
-    // It updates the power state using internal api.
-    if (sli_si91x_power_manager_change_power_state(current_state, state) != SL_STATUS_OK) {
+// change_power_state runs exitcritical before PS0/PS1; PS1 post-wake cpsie respects critical_irq_state.
+#ifndef SLI_POWER_MANAGER_USE_CRITICAL_IRQ_FOR_PS_API
+    if (sli_si91x_power_manager_change_power_state(current_state, state) != SL_STATUS_OK)
+#else
+    if (sli_si91x_power_manager_change_power_state_with_critical_irq(current_state, state, critical_irq_state)
+        != SL_STATUS_OK)
+#endif
+    {
+#ifndef SLI_POWER_MANAGER_USE_CRITICAL_IRQ_FOR_PS_API
+      SL_PRINT_STRING_ERROR("sli_si91x_power_manager_update_ps_requirement: change_power_state "
+                            "failed, line no: %d\r\n",
+                            __LINE__);
+#else
+      SL_PRINT_STRING_ERROR("sli_si91x_power_manager_update_ps_requirement_with_critical_irq: change_power_state "
+                            "failed, line no: %d\r\n",
+                            __LINE__);
+#endif
       return SL_STATUS_INVALID_PARAMETER;
     }
     if (current_state == SL_SI91X_POWER_MANAGER_PS2 && state == SL_SI91X_POWER_MANAGER_PS1) {
@@ -584,8 +723,11 @@ sl_power_state_t sl_si91x_get_lowest_ps(void)
        (ps_counter > PS_MIN_COUNTER) && (requirement_ps_table[ps_counter] == PS_MIN_COUNTER);
        ps_counter--) {
   }
-  if ((ps_counter == PS_MIN_COUNTER) && (!requirement_ps_table[ps_counter])) {
+  bool debug_keepalive_active = sli_si91x_debug_keepalive_active();
+  if ((ps_counter == PS_MIN_COUNTER) && (!requirement_ps_table[ps_counter]) && (debug_keepalive_active == false)) {
     return SL_SI91X_POWER_MANAGER_SLEEP;
+  } else if ((ps_counter < SL_SI91X_POWER_MANAGER_PS3) && (debug_keepalive_active == true)) {
+    return SL_SI91X_POWER_MANAGER_PS3;
   } else {
     return (sl_power_state_t)ps_counter;
   }
@@ -623,15 +765,24 @@ sl_status_t sl_si91x_power_manager_request_ps1_state(void)
   sl_status_t status = SL_STATUS_OK;
   if (sli_si91x_pm_standby_state_active) {
     // If the standby state is requested, then it is not possible to add the PS1 state request.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_request_ps1_state: standby "
+                          "state is requested, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_INVALID_STATE;
   }
   if (!(M4_ULP_SLP_STATUS_REG & ULP_MODE_SWITCHED_NPSS)) {
     // If the ULP mode is not enabled, then it is not possible to transition to the PS1 state.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_request_ps1_state: ULP mode "
+                          "is not enabled, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_INVALID_STATE;
   }
   status = sl_si91x_power_manager_set_wakeup_sources(SL_SI91X_POWER_MANAGER_ULPSS_WAKEUP, true);
   if (status != SL_STATUS_OK) {
-    // Returns the error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_request_ps1_state: set_wakeup_sources failed "
+                          "st=0x%04lX,line no : %d\r\n",
+                          (unsigned long)status,
+                          (int)__LINE__);
     return status;
   }
   sli_si91x_pm_ps1_state_active = true;
@@ -656,11 +807,17 @@ sl_status_t sl_si91x_power_manager_remove_ps1_state_request(void)
   sl_status_t status = SL_STATUS_OK;
   if (!sli_si91x_pm_ps1_state_active) {
     // If the PS1 state is not requested, then it is not possible to remove the PS1 state request.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_remove_ps1_state_request: "
+                          "PS1 state is not requested, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_INVALID_STATE;
   }
   status = sl_si91x_power_manager_set_wakeup_sources(SL_SI91X_POWER_MANAGER_ULPSS_WAKEUP, false);
   if (status != SL_STATUS_OK) {
-    // Returns the error code.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_remove_ps1_state_request: set_wakeup_sources "
+                          "failed st=0x%04lX,line no : %d\r\n",
+                          (unsigned long)status,
+                          (int)__LINE__);
     return status;
   }
   sli_si91x_pm_ps1_state_active = false;
@@ -698,6 +855,9 @@ sl_status_t sl_si91x_power_manager_request_standby_state(void)
 {
   if (sli_si91x_pm_ps1_state_active) {
     // If the PS1 state is requested, then it is not possible to add the standby state request.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_request_standby_state: PS1 "
+                          "state is requested, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_INVALID_STATE;
   }
   sli_si91x_pm_standby_state_active = true;
@@ -719,6 +879,9 @@ sl_status_t sl_si91x_power_manager_remove_standby_state_request(void)
 {
   if (!sli_si91x_pm_standby_state_active) {
     // If the standby state is not requested, then it is not possible to remove the standby state request.
+    SL_PRINT_STRING_ERROR("sl_si91x_power_manager_remove_standby_state_request:"
+                          " standby state is not requested, line no: %d\r\n",
+                          __LINE__);
     return SL_STATUS_INVALID_STATE;
   }
   sli_si91x_pm_standby_state_active = false;

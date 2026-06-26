@@ -81,7 +81,8 @@
  *  The \p network_context parameter is used only when the module is acting as a station in external stack mode (lwIP).
  *  In this case, \p network_context should refer to a valid @ref sl_net_wifi_lwip_context_t variable.
  * @note
- *  In SoC mode, wireless initialization must be completed before using the NVM3 APIs in the common flash, as flash write and erase operations require communication between the NWP & M4.
+ *  In SiWx91x SoC mode, wireless initialization (typically this API on a Wi-Fi interface) is mandatory before using NVM3 APIs that target common flash.
+ *  Common-flash erase and program operations require NWP-M4 communication, so calling NVM3 APIs (for example @c nvm3_initDefault()) before wireless initialization can fail with @c SL_STATUS_NVM3_NO_VALID_PAGES (0x5E) even when the NVM3 region is sized and linked correctly.
  * @note
  * It is recommended not to access the interfaces once the @ref sl_net_deinit is performed to avoid unintented behavior.
  * It is recommended to avoid using other sl_net_interface_t during sl_net_init.

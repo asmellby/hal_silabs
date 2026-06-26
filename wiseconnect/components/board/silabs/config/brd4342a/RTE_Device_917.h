@@ -1393,10 +1393,11 @@
 //Pintool data
 #endif
 
+// <e> Enable multiple CSN lines
 #define M4_SSI_CS0 1
-#define M4_SSI_CS1 1
-#define M4_SSI_CS2 1
-#define M4_SSI_CS3 1
+#define M4_SSI_CS1 0
+#define M4_SSI_CS2 0
+#define M4_SSI_CS3 0
 
 // <o> SSI_MASTER_CS Pin <0=>GPIO_9 <1=>GPIO_28 <2=>GPIO_53 <3=>GPIO_10 <4=>GPIO_15 <5=>GPIO_50 <6=>GPIO_51
 #ifndef SSI_MASTER_CS0_LOC
@@ -1425,7 +1426,7 @@
 #endif
 #else
 //Pintool data
-#define RTE_SSI_MASTER_CS0      M4_SSI_CS0
+#define RTE_SSI_MASTER_CS0      1
 #define RTE_SSI_MASTER_CS0_PORT HP
 #define RTE_SSI_MASTER_CS0_PIN  SSI_MASTER_CS0__PIN
 #define RTE_SSI_MASTER_CS0_MODE EGPIO_PIN_MUX_MODE3
@@ -1445,18 +1446,21 @@
 #ifndef SSI_MASTER_CS1_LOC
 #define RTE_SSI_MASTER_CS1_PORT_ID 0
 #if (RTE_SSI_MASTER_CS1_PORT_ID == 0)
+#define RTE_SSI_MASTER_CS1      M4_SSI_CS1
 #define RTE_SSI_MASTER_CS1_PORT HP
 #define RTE_SSI_MASTER_CS1_PIN  10
 #else
 #error "Invalid SSI_MASTER_CS1 Pin Configuration!"
 #endif
 #else
-#define RTE_SSI_MASTER_CS1_PORT HP
-#define RTE_SSI_MASTER_CS1_PIN  SSI_MASTER_CS1__PIN
-#endif
-#define RTE_SSI_MASTER_CS1        M4_SSI_CS1
+//Pintool data
+#define RTE_SSI_MASTER_CS1_PORT   HP
+#define RTE_SSI_MASTER_CS1_PIN    SSI_MASTER_CS1__PIN
+#define RTE_SSI_MASTER_CS1        1
 #define RTE_SSI_MASTER_CS1_MODE   EGPIO_PIN_MUX_MODE3
 #define RTE_SSI_MASTER_CS1_PADSEL 5
+//Pintool data
+#endif
 
 //CS2
 #ifndef SSI_MASTER_CS2_LOC
@@ -1478,7 +1482,7 @@
 #endif
 #else
 //Pintool data
-#define RTE_SSI_MASTER_CS2      M4_SSI_CS2
+#define RTE_SSI_MASTER_CS2      1
 #define RTE_SSI_MASTER_CS2_PORT HP
 #define RTE_SSI_MASTER_CS2_PIN  SSI_MASTER_CS2__PIN
 #define RTE_SSI_MASTER_CS2_MODE EGPIO_PIN_MUX_MODE3
@@ -1495,18 +1499,21 @@
 #ifndef SSI_MASTER_CS3_LOC
 #define RTE_SSI_MASTER_CS3_PORT_ID 0
 #if (RTE_SSI_MASTER_CS3_PORT_ID == 0)
+#define RTE_SSI_MASTER_CS3      M4_SSI_CS3
 #define RTE_SSI_MASTER_CS3_PORT HP
 #define RTE_SSI_MASTER_CS3_PIN  51
 #else
 #error "Invalid SSI_MASTER_CS3 Pin Configuration!"
 #endif
 #else
-#define RTE_SSI_MASTER_CS3_PORT HP
-#define RTE_SSI_MASTER_CS3_PIN  SSI_MASTER_CS3__PIN
-#endif
-#define RTE_SSI_MASTER_CS3        M4_SSI_CS3
+//Pintool data
+#define RTE_SSI_MASTER_CS3_PORT   HP
+#define RTE_SSI_MASTER_CS3_PIN    SSI_MASTER_CS3__PIN
+#define RTE_SSI_MASTER_CS3        1
 #define RTE_SSI_MASTER_CS3_MODE   EGPIO_PIN_MUX_MODE3
 #define RTE_SSI_MASTER_CS3_PADSEL 15
+//Pintool data
+#endif
 
 //   <e> DMA Rx
 //     <o3> Channel <28=>28
@@ -5733,6 +5740,61 @@
 #define RTE_GPIO_57_PAD  21
 #define RTE_GPIO_57_PIN  57
 #define RTE_GPIO_57_MODE 0
+
+#define RTE_HP_GPIO_64_PORT HP
+#define RTE_HP_GPIO_64_PAD  22
+#define RTE_HP_GPIO_64_PIN  64
+#define RTE_HP_GPIO_64_MODE 0
+
+#define RTE_HP_GPIO_65_PORT HP
+#define RTE_HP_GPIO_65_PAD  23
+#define RTE_HP_GPIO_65_PIN  65
+#define RTE_HP_GPIO_65_MODE 0
+
+#define RTE_HP_GPIO_66_PORT HP
+#define RTE_HP_GPIO_66_PAD  24
+#define RTE_HP_GPIO_66_PIN  66
+#define RTE_HP_GPIO_66_MODE 0
+
+#define RTE_HP_GPIO_68_PORT HP
+#define RTE_HP_GPIO_68_PAD  26
+#define RTE_HP_GPIO_68_PIN  68
+#define RTE_HP_GPIO_68_MODE 0
+
+#define RTE_HP_GPIO_69_PORT HP
+#define RTE_HP_GPIO_69_PAD  27
+#define RTE_HP_GPIO_69_PIN  69
+#define RTE_HP_GPIO_69_MODE 0
+
+#define RTE_HP_GPIO_70_PORT HP
+#define RTE_HP_GPIO_70_PAD  28
+#define RTE_HP_GPIO_70_PIN  70
+#define RTE_HP_GPIO_70_MODE 0
+
+#define RTE_HP_GPIO_71_PORT HP
+#define RTE_HP_GPIO_71_PAD  29
+#define RTE_HP_GPIO_71_PIN  71
+#define RTE_HP_GPIO_71_MODE 0
+
+#define RTE_HP_GPIO_72_PORT HP
+#define RTE_HP_GPIO_72_PAD  30
+#define RTE_HP_GPIO_72_PIN  72
+#define RTE_HP_GPIO_72_MODE 0
+
+#define RTE_HP_GPIO_73_PORT HP
+#define RTE_HP_GPIO_73_PAD  31
+#define RTE_HP_GPIO_73_PIN  73
+#define RTE_HP_GPIO_73_MODE 0
+
+#define RTE_HP_GPIO_74_PORT HP
+#define RTE_HP_GPIO_74_PAD  32
+#define RTE_HP_GPIO_74_PIN  74
+#define RTE_HP_GPIO_74_MODE 0
+
+#define RTE_HP_GPIO_75_PORT HP
+#define RTE_HP_GPIO_75_PAD  33
+#define RTE_HP_GPIO_75_PIN  75
+#define RTE_HP_GPIO_75_MODE 0
 
 #ifdef SLI_SI91X_MCU_CONFIG_RADIO_BOARD_BASE_VER
 #define RTE_ULP_GPIO_0_PORT_ID 1

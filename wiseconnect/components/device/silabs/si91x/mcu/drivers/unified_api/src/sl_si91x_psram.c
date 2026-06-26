@@ -37,6 +37,7 @@
 #include "rsi_rom_udma.h"
 #include "sl_si91x_psram_handle.h"
 #include "sl_si91x_psram.h"
+
 /*******************************************************************************
  *******************************   DEFINES   ***********************************
  ******************************************************************************/
@@ -778,6 +779,7 @@ sl_psram_return_type_t psram_enable_auto_readwrite(void)
   }
 
   if (qspi_reg->QSPI_BUS_MODE_REG & AUTO_MODE) {
+
     return PSRAM_AUTO_MODE;
   }
 
@@ -803,6 +805,7 @@ sl_psram_return_type_t psram_disable_auto_readwrite(void)
   }
 
   if (!(qspi_reg->QSPI_BUS_MODE_REG & AUTO_MODE)) {
+
     return PSRAM_MANUAL_MODE;
   }
 
@@ -854,6 +857,9 @@ sl_psram_return_type_t psram_toggle_burst_length(void)
 {
 
   if (PSRAMStatus.state != initialised) {
+    SL_PRINT_STRING_ERROR("psram_toggle_burst_length: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NOT_INITIALIZED),
+                          (int)__LINE__);
     return PSRAM_NOT_INITIALIZED;
   }
 
@@ -886,6 +892,9 @@ sl_psram_return_type_t psram_set_wrap_size(sl_psram_burst_size_type_t PSRAMBurst
   uint8_t Response;
 
   if (PSRAMStatus.state != initialised) {
+    SL_PRINT_STRING_ERROR("psram_set_wrap_size: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NOT_INITIALIZED),
+                          (int)__LINE__);
     return PSRAM_NOT_INITIALIZED;
   }
 
@@ -948,9 +957,6 @@ sl_psram_return_type_t psram_set_wrap_size(sl_psram_burst_size_type_t PSRAMBurst
 sl_psram_return_type_t sli_si91x_psram_device_init(void)
 {
   sl_psram_return_type_t PSRAM_Status = PSRAM_UNKNOWN;
-#if (SL_SI91X_D_CACHE_ENABLE == 1)
-  uint32_t dCacheInitStatus = 0;
-#endif
 
   /*QSPI Initialization*/
 
@@ -1015,21 +1021,13 @@ sl_psram_return_type_t sli_si91x_psram_device_init(void)
     /*Return success*/
     PSRAM_Status = PSRAM_FAILURE;
 
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_init: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_Status),
+                          (int)__LINE__);
     return PSRAM_Status;
   }
 
-  /*D-cache Initialization*/
-#if (SL_SI91X_D_CACHE_ENABLE == 1)
-  DCACHE_REG_CTRL |= 0x3;
-  dCacheInitStatus = DCACHE_REG_MAINT_STATUS;
-  while (dCacheInitStatus != 0x101) {
-    dCacheInitStatus = DCACHE_REG_MAINT_STATUS;
-  }
-  /*Disable HPORT allocation signal*/
-  DCACHE_CTRL_AND_STATUS &= ~(HPORT_ALLOCATE_SIGNAL);
-#endif
-
-  return PSRAM_Status;
+  return PSRAM_SUCCESS;
 }
 
 sl_psram_return_type_t sl_si91x_psram_init()
@@ -1096,13 +1094,6 @@ sl_psram_return_type_t sli_si91x_psram_device_uninit(void)
   /*Initialize the QSPI controller to PSRAM default mode configuration*/
   RSI_QSPI_SpiInit((qspi_reg_t *)M4_QSPI_2_BASE_ADDRESS, (spi_config_t *)&spi_psram_default_config, 0, 0, 0);
 
-  /*disable cache*/
-#if (SL_SI91X_D_CACHE_ENABLE == 1)
-  DCACHE_REG_CTRL &= 0xFFFFFFFE;
-  while ((DCACHE_REG_MAINT_STATUS & 0x3) != 0x0)
-    ;
-#endif
-
   PSRAMStatus.state = uninitialised;
 
   PSRAMStatus.burstSize = 0;
@@ -1151,19 +1142,31 @@ sl_psram_return_type_t sl_si91x_psram_manual_write_in_blocking_mode(uint32_t add
   uint32_t lengthInBytes = 0;
 
   if (PSRAMStatus.state != initialised) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_blocking_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NOT_INITIALIZED),
+                          (int)__LINE__);
     return PSRAM_NOT_INITIALIZED;
   }
 
   if (((hSize != sizeof(uint8_t)) && (hSize != sizeof(uint16_t)) && (hSize != sizeof(uint32_t)))) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_blocking_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_INVALID_HSIZE),
+                          (int)__LINE__);
     return PSRAM_INVALID_HSIZE;
   }
 
   if (NULL == SourceBuf) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_blocking_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NULL_ADDRESS),
+                          (int)__LINE__);
     return PSRAM_NULL_ADDRESS;
   }
 
   if ((!(addr >= PSRAM_BASE_ADDRESS && addr < (PSRAM_BASE_ADDRESS + (PSRAM_Device.devDensity / 8))))
       || ((addr + (num_of_elements * hSize)) > (PSRAM_BASE_ADDRESS + (PSRAM_Device.devDensity / 8)))) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_blocking_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_INVALID_ADDRESS_LENGTH),
+                          (int)__LINE__);
     return PSRAM_INVALID_ADDRESS_LENGTH;
   }
 #if PSRAM_ROW_BOUNDARY_CROSSING_SUPPORTED
@@ -1305,19 +1308,31 @@ sl_psram_return_type_t sl_si91x_psram_manual_read_in_blocking_mode(uint32_t addr
   uint32_t lengthInBytes = 0;
 
   if (PSRAMStatus.state != initialised) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_blocking_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NOT_INITIALIZED),
+                          (int)__LINE__);
     return PSRAM_NOT_INITIALIZED;
   }
 
   if (((hSize != sizeof(uint8_t)) && (hSize != sizeof(uint16_t)) && (hSize != sizeof(uint32_t)))) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_blocking_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_INVALID_HSIZE),
+                          (int)__LINE__);
     return PSRAM_INVALID_HSIZE;
   }
 
   if (NULL == DestBuf) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_blocking_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NULL_ADDRESS),
+                          (int)__LINE__);
     return PSRAM_NULL_ADDRESS;
   }
 
   if ((!(addr >= PSRAM_BASE_ADDRESS && addr < (PSRAM_BASE_ADDRESS + (PSRAM_Device.devDensity / 8))))
       || ((addr + (num_of_elements * hSize)) > (PSRAM_BASE_ADDRESS + (PSRAM_Device.devDensity / 8)))) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_blocking_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_INVALID_ADDRESS_LENGTH),
+                          (int)__LINE__);
     return PSRAM_INVALID_ADDRESS_LENGTH;
   }
 
@@ -1483,19 +1498,31 @@ sl_psram_return_type_t sl_si91x_psram_manual_write_in_dma_mode(uint32_t addr,
   uint32_t xferAddr;
 
   if (PSRAMStatus.state != initialised) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NOT_INITIALIZED),
+                          (int)__LINE__);
     return PSRAM_NOT_INITIALIZED;
   }
 
   if (((hSize != sizeof(uint8_t)) && (hSize != sizeof(uint16_t)) && (hSize != sizeof(uint32_t)))) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_INVALID_HSIZE),
+                          (int)__LINE__);
     return PSRAM_INVALID_HSIZE;
   }
 
   if (NULL == SourceBuf) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NULL_ADDRESS),
+                          (int)__LINE__);
     return PSRAM_NULL_ADDRESS;
   }
 
   if ((!(addr >= PSRAM_BASE_ADDRESS && addr < (PSRAM_BASE_ADDRESS + (PSRAM_Device.devDensity / 8))))
       || ((addr + (length * hSize)) > (PSRAM_BASE_ADDRESS + (PSRAM_Device.devDensity / 8)))) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_INVALID_ADDRESS_LENGTH),
+                          (int)__LINE__);
     return PSRAM_INVALID_ADDRESS_LENGTH;
   }
 
@@ -1575,6 +1602,9 @@ sl_psram_return_type_t sl_si91x_psram_manual_write_in_dma_mode(uint32_t addr,
   /* Initialize dma */
   udmaHandle0 = UDMAx_Initialize(&UDMA0_Resources, UDMA0_Table, udmaHandle0, dma_rom_buff0);
   if (udmaHandle0 == NULL) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_FAILURE),
+                          (int)__LINE__);
     return PSRAM_FAILURE;
   }
 
@@ -1590,6 +1620,9 @@ sl_psram_return_type_t sl_si91x_psram_manual_write_in_dma_mode(uint32_t addr,
                                   udma0_chnl_info,
                                   udmaHandle0);
   if (status != RSI_OK) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_FAILURE),
+                          (int)__LINE__);
     return PSRAM_FAILURE;
   }
 
@@ -1597,6 +1630,9 @@ sl_psram_return_type_t sl_si91x_psram_manual_write_in_dma_mode(uint32_t addr,
   status = UDMAx_ChannelEnable(QSPI_DMA_DEST_CHANNEL_NUM, &UDMA0_Resources, udmaHandle0);
   if (status != RSI_OK) {
     RSI_UDMA_DeInit(udmaHandle0, &config);
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_FAILURE),
+                          (int)__LINE__);
     return PSRAM_FAILURE;
   }
 
@@ -1703,11 +1739,17 @@ sl_psram_return_type_t sl_si91x_psram_manual_write_in_dma_mode(uint32_t addr,
   /* Enable dma controller */
   status = UDMAx_DMAEnable(&UDMA0_Resources, udmaHandle0);
   if (status != RSI_OK) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_FAILURE),
+                          (int)__LINE__);
     return PSRAM_FAILURE;
   }
 
   status = RSI_UDMA_ChannelSoftwareTrigger(udmaHandle0, QSPI_DMA_DEST_CHANNEL_NUM);
   if (status != RSI_OK) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_write_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_FAILURE),
+                          (int)__LINE__);
     return PSRAM_FAILURE;
   }
   return PSRAM_SUCCESS;
@@ -1733,19 +1775,31 @@ sl_psram_return_type_t sl_si91x_psram_manual_read_in_dma_mode(uint32_t addr,
   uint32_t xferAddr;
 
   if (PSRAMStatus.state != initialised) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NOT_INITIALIZED),
+                          (int)__LINE__);
     return PSRAM_NOT_INITIALIZED;
   }
 
   if (((hSize != sizeof(uint8_t)) && (hSize != sizeof(uint16_t)) && (hSize != sizeof(uint32_t)))) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_INVALID_HSIZE),
+                          (int)__LINE__);
     return PSRAM_INVALID_HSIZE;
   }
 
   if (NULL == DestBuf) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NULL_ADDRESS),
+                          (int)__LINE__);
     return PSRAM_NULL_ADDRESS;
   }
 
   if ((!(addr >= PSRAM_BASE_ADDRESS && addr < (PSRAM_BASE_ADDRESS + (PSRAM_Device.devDensity / 8))))
       || ((addr + (length * hSize)) > (PSRAM_BASE_ADDRESS + (PSRAM_Device.devDensity / 8)))) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_INVALID_ADDRESS_LENGTH),
+                          (int)__LINE__);
     return PSRAM_INVALID_ADDRESS_LENGTH;
   }
 
@@ -1825,6 +1879,9 @@ sl_psram_return_type_t sl_si91x_psram_manual_read_in_dma_mode(uint32_t addr,
   /* Initialize dma */
   udmaHandle0 = UDMAx_Initialize(&UDMA0_Resources, UDMA0_Table, udmaHandle0, dma_rom_buff0);
   if (udmaHandle0 == NULL) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_FAILURE),
+                          (int)__LINE__);
     return PSRAM_FAILURE;
   }
 
@@ -1840,6 +1897,9 @@ sl_psram_return_type_t sl_si91x_psram_manual_read_in_dma_mode(uint32_t addr,
                                   udma0_chnl_info,
                                   udmaHandle0);
   if (status != RSI_OK) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_FAILURE),
+                          (int)__LINE__);
     return PSRAM_FAILURE;
   }
 
@@ -1847,6 +1907,9 @@ sl_psram_return_type_t sl_si91x_psram_manual_read_in_dma_mode(uint32_t addr,
   status = UDMAx_ChannelEnable(QSPI_DMA_SRC_CHANNEL_NUM, &UDMA0_Resources, udmaHandle0);
   if (status != RSI_OK) {
     RSI_UDMA_DeInit(udmaHandle0, &config);
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_FAILURE),
+                          (int)__LINE__);
     return PSRAM_FAILURE;
   }
 
@@ -1967,11 +2030,17 @@ sl_psram_return_type_t sl_si91x_psram_manual_read_in_dma_mode(uint32_t addr,
   /* Enable dma controller */
   status = UDMAx_DMAEnable(&UDMA0_Resources, udmaHandle0);
   if (status != RSI_OK) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_FAILURE),
+                          (int)__LINE__);
     return PSRAM_FAILURE;
   }
 
   status = RSI_UDMA_ChannelSoftwareTrigger(udmaHandle0, QSPI_DMA_SRC_CHANNEL_NUM);
   if (status != RSI_OK) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_manual_read_in_dma_mode: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_FAILURE),
+                          (int)__LINE__);
     return PSRAM_FAILURE;
   }
   return PSRAM_SUCCESS;
@@ -2076,6 +2145,9 @@ sl_psram_return_type_t sl_si91x_psram_enable_encry_decry(uint16_t keySize)
 {
 
   if (PSRAMStatus.state != initialised) {
+    SL_PRINT_STRING_ERROR("sl_si91x_psram_enable_encry_decry: error status=0x%04lX,line no : %d\r\n",
+                          (unsigned long)(PSRAM_NOT_INITIALIZED),
+                          (int)__LINE__);
     return PSRAM_NOT_INITIALIZED;
   }
 

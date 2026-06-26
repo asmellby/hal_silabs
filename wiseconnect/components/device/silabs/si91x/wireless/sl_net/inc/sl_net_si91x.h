@@ -153,7 +153,7 @@ static inline sl_status_t sl_si91x_set_credential(sl_net_credential_id_t id,
                                                   const void *credential,
                                                   uint32_t credential_length)
 {
-  return sli_net_set_credential(id, type, credential, credential_length);
+  return sli_si91x_set_credential(id, type, credential, credential_length);
 }
 
 static inline sl_status_t sl_si91x_get_credential(sl_net_credential_id_t id,
@@ -161,12 +161,12 @@ static inline sl_status_t sl_si91x_get_credential(sl_net_credential_id_t id,
                                                   const void *credential,
                                                   const uint32_t *credential_length)
 {
-  return sli_net_get_credential(id, type, credential, credential_length);
+  return sli_si91x_get_credential(id, type, credential, credential_length);
 }
 
 static inline sl_status_t sl_si91x_delete_credential(sl_net_credential_id_t id, sl_net_credential_type_t type)
 {
-  return sli_net_delete_credential(id, type);
+  return sli_si91x_delete_credential(id, type);
 }
 
 //! @endcond
