@@ -38,7 +38,9 @@
 #include "sl_bit.h"
 #include "sl_dma_manager.h"
 #include "sli_dma_manager_internal.h"
+#if defined(SL_COMPONENT_CATALOG_PRESENT)
 #include "sl_component_catalog.h"
+#endif
 #if defined(SL_CATALOG_DMA_MANAGER_ROUND_ROBIN_PRESENT)
 #include "sl_dma_manager_round_robin_config.h"
 #endif
@@ -127,33 +129,31 @@ sl_status_t sl_dma_manager_init(sl_dma_handle_t *dma_handle,
     }
   }
 
-  // Allocate the table for the interrupt callback function pointers
-  status = sl_memory_calloc(dma_peripheral->nbr_channel,
-                            sizeof(sl_dma_manager_channel_irq_callback_t),
-                            BLOCK_TYPE_LONG_TERM,
-                            (void **)&dma_handle->channel_irq_callbacks_table);
-  if (status != SL_STATUS_OK) {
-    if (handle_allocated) {
+  if (handle_allocated) {
+    // Allocate the table for the interrupt callback function pointers
+    status = sl_memory_calloc(dma_peripheral->nbr_channel,
+                              sizeof(sl_dma_manager_channel_irq_callback_t),
+                              BLOCK_TYPE_LONG_TERM,
+                              (void **)&dma_handle->channel_irq_callbacks_table);
+    if (status != SL_STATUS_OK) {
       sl_memory_free((void *)dma_handle);
+      default_dma_handle = saved_default_handle;
+      CORE_EXIT_ATOMIC();
+      return status;
     }
-    default_dma_handle = saved_default_handle;
-    CORE_EXIT_ATOMIC();
-    return status;
-  }
 
-  // Allocate the table for the per-channel user data pointers
-  status = sl_memory_calloc(dma_peripheral->nbr_channel,
-                            sizeof(void *),
-                            BLOCK_TYPE_LONG_TERM,
-                            (void **)&dma_handle->channel_user_data_table);
-  if (status != SL_STATUS_OK) {
-    sl_memory_free((void *)dma_handle->channel_irq_callbacks_table);
-    if (handle_allocated) {
+    // Allocate the table for the per-channel user data pointers
+    status = sl_memory_calloc(dma_peripheral->nbr_channel,
+                              sizeof(void *),
+                              BLOCK_TYPE_LONG_TERM,
+                              (void **)&dma_handle->channel_user_data_table);
+    if (status != SL_STATUS_OK) {
+      sl_memory_free((void *)dma_handle->channel_irq_callbacks_table);
       sl_memory_free((void *)dma_handle);
-    }
-    default_dma_handle = saved_default_handle;
-    CORE_EXIT_ATOMIC();
-    return status;
+      default_dma_handle = saved_default_handle;
+      CORE_EXIT_ATOMIC();
+      return status;
+    }    
   }
 
   // Initialize DMA handle parameters

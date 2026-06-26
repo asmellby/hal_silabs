@@ -30,7 +30,9 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#if defined(SL_COMPONENT_CATALOG_PRESENT)
 #include "sl_component_catalog.h"
+#endif
 #include "sl_dma_manager.h"
 #include "sl_code_classification.h"
 
