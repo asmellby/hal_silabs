@@ -117,6 +117,10 @@
 
 #define MBEDTLS_PSA_ACCEL_ALG_ECDH
 
+#if defined(SLI_MBEDTLS_DEVICE_HSE)
+  #define MBEDTLS_PSA_ACCEL_ALG_JPAKE
+#endif
+
 // -------------------------------------
 // Signature
 

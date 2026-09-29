@@ -112,6 +112,19 @@ typedef struct {
 } sli_se_transparent_aead_operation_t;
 
 #endif // !SLI_EXCLUDE_PSA_SE_SYMCRYPTO_DRIVERS
+
+#if defined(SLI_PSA_DRIVER_FEATURE_PAKE)
+#include "sli_se_driver_pake.h"
+typedef sli_se_driver_pake_operation_t sli_se_transparent_pake_operation_t;
+
+/** Key-derivation state for PSA_ALG_TLS12_ECJPAKE_TO_PMS when the SECRET
+ * input is the 32-byte SE implicit key (already the TLS premaster secret). */
+typedef struct {
+  uint8_t pms[32];
+  uint8_t pms_set;
+} sli_se_transparent_key_derivation_operation_t;
+#endif
+
 #endif // SLI_MBEDTLS_DEVICE_HSE
 
 /** \} (end addtogroup sl_psa_drivers_se) */

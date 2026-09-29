@@ -380,6 +380,14 @@
 #endif
 
 // -------------------------------------
+// PAKE
+
+#if defined(PSA_WANT_ALG_JPAKE) && defined(SLI_MBEDTLS_DEVICE_HSE)
+  #define SLI_PSA_DRIVER_FEATURE_PAKE
+  #define SLI_PSA_DRIVER_FEATURE_JPAKE
+#endif
+
+// -------------------------------------
 // Signature
 
 #if defined(PSA_WANT_ALG_ECDSA) && defined(MBEDTLS_PSA_ACCEL_ALG_ECDSA) \

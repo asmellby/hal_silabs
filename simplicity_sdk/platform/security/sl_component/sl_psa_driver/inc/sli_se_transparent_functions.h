@@ -392,6 +392,26 @@ psa_status_t sli_se_transparent_key_agreement(
   size_t output_size,
   size_t *output_length);
 
+#if defined(SLI_PSA_DRIVER_FEATURE_PAKE)
+//------------------------------------------------------------------------------
+// Key derivation (TLS12 ECJPAKE-to-PMS passthrough for SE implicit key)
+
+psa_status_t sli_se_transparent_key_derivation_input_bytes(
+  sli_se_transparent_key_derivation_operation_t *operation,
+  psa_algorithm_t alg,
+  psa_key_derivation_step_t step,
+  const uint8_t *data,
+  size_t data_length);
+
+psa_status_t sli_se_transparent_key_derivation_output_bytes(
+  sli_se_transparent_key_derivation_operation_t *operation,
+  uint8_t *output,
+  size_t output_length);
+
+psa_status_t sli_se_transparent_key_derivation_abort(
+  sli_se_transparent_key_derivation_operation_t *operation);
+#endif /* SLI_PSA_DRIVER_FEATURE_PAKE */
+
 #ifdef __cplusplus
 }
 #endif
@@ -404,3 +424,48 @@ psa_status_t sli_se_transparent_key_agreement(
 /// @endcond
 
 #endif // SLI_SE_TRANSPARENT_FUNCTIONS_H
+
+// PAKE prototypes need psa_crypto_driver_pake_* from psa/crypto_extra.h.
+// This header is pulled in early (e.g. mbedtls_sha.c) before crypto_extra.h;
+// declare them on a later re-include once PSA_CRYPTO_EXTRA_H is defined.
+#if defined(SLI_MBEDTLS_DEVICE_HSE) && defined(SLI_PSA_DRIVER_FEATURE_PAKE) \
+  && defined(PSA_CRYPTO_EXTRA_H) && !defined(SLI_SE_TRANSPARENT_PAKE_FUNCTIONS_H)
+#define SLI_SE_TRANSPARENT_PAKE_FUNCTIONS_H
+
+#include "sli_se_transparent_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+psa_status_t sli_se_transparent_pake_setup(
+  sli_se_transparent_pake_operation_t *operation,
+  const psa_crypto_driver_pake_inputs_t *inputs);
+
+psa_status_t sli_se_transparent_pake_output(
+  sli_se_transparent_pake_operation_t *operation,
+  psa_crypto_driver_pake_step_t step,
+  uint8_t *output,
+  size_t output_size,
+  size_t *output_length);
+
+psa_status_t sli_se_transparent_pake_input(
+  sli_se_transparent_pake_operation_t *operation,
+  psa_crypto_driver_pake_step_t step,
+  const uint8_t *input,
+  size_t input_length);
+
+psa_status_t sli_se_transparent_pake_get_implicit_key(
+  sli_se_transparent_pake_operation_t *operation,
+  uint8_t *output,
+  size_t output_size,
+  size_t *output_length);
+
+psa_status_t sli_se_transparent_pake_abort(
+  sli_se_transparent_pake_operation_t *operation);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // SLI_SE_TRANSPARENT_PAKE_FUNCTIONS_H
